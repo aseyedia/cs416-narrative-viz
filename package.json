@@ -1,15 +1,21 @@
 {
-  "name": "philly-crash-narrative",
-  "version": "0.0.1",
+  "name": "cs416-narrative-viz",
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite"
   },
-  "dependencies": {
-    "d3": "^7.9.0"
-  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "devDependencies": {
     "vite": "^5.3.3"
+  },
+  "dependencies": {
+    "@types/topojson-client": "^3.1.4",
+    "d3": "^7.9.0",
+    "d3-svg-annotation": "^2.5.1"
   }
 }
