@@ -1,0 +1,16 @@
+body {
+    font-family: Arial, sans-serif;
+  }
+  #controls {
+    margin: 20px 0;
+    text-align: center;
+  }
+  svg {
+    border: 1px solid #ccc;
+  }
+  .slide {
+    font-size: 24px;
+    font-weight: bold;
+    fill: black;
+  }
+  
