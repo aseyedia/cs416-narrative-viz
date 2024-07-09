@@ -14,7 +14,7 @@ const path = d3.geoPath().projection(projection);
 Promise.all([
     phillyMap,
     phillyCSV
-]).then(([phillyMap, crashData]) => {
+]).then(([phillyMap]) => {
 
     const svg = d3.select("#visualization").append("svg")
         .attr("width", width)
@@ -26,14 +26,14 @@ Promise.all([
 
     console.log(phillyMap);
 
-    svg.selectAll("path")
-        .data(phillyMap.features)
+    // Draw the roads
+    svg.selectAll("path.road")
+        .data(phillyMap.features.filter(d => d.properties.highway))
         .enter()
         .append("path")
         .attr("d", path)
         .attr("fill", "none")
         .attr("stroke", d => {
-            // Differentiate the stroke width based on the highway type
             if (d.properties.highway === "residential") {
                 return "grey"; // Use a lighter color for residential roads if desired
             } else {
@@ -46,8 +46,16 @@ Promise.all([
             } else {
                 return 2; // Thicker stroke for primary and secondary roads
             }
-        })
-        .attr("width", width)
-        .attr("height", height);
+        });
+
+    // Draw the city boundary
+    svg.selectAll("path.boundary")
+        .data(phillyMap.features.filter(d => d.properties.boundary === 'administrative')) // Assuming 'administrative' signifies boundary features
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-width", 3);
 
 });
