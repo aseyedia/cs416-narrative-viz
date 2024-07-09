@@ -13,7 +13,7 @@ const path = d3.geoPath().projection(projection);
 
 Promise.all([
     phillyMap,
-    d3.csv("/assets/philly_crashes.csv")
+    phillyCSV
 ]).then(([phillyMap, crashData]) => {
 
     const svg = d3.select("#visualization").append("svg")
