@@ -14,7 +14,7 @@ const path = d3.geoPath().projection(projection);
 Promise.all([
     phillyMap,
     phillyCSV
-]).then(([phillyMap]) => {
+]).then(([phillyMap, crashData]) => {
 
     const svg = d3.select("#visualization").append("svg")
         .attr("width", width)
@@ -23,8 +23,6 @@ Promise.all([
             svg.attr("transform", event.transform);
         }))
         .append("g");
-
-    console.log(phillyMap);
 
     // Draw the roads
     svg.selectAll("path.road")
@@ -35,16 +33,16 @@ Promise.all([
         .attr("fill", "none")
         .attr("stroke", d => {
             if (d.properties.highway === "residential") {
-                return "grey"; // Use a lighter color for residential roads if desired
+                return "grey";
             } else {
                 return "black";
             }
         })
         .attr("stroke-width", d => {
             if (d.properties.highway === "residential") {
-                return 0.5; // Thinner stroke for residential roads
+                return 0.5;
             } else {
-                return 2; // Thicker stroke for primary and secondary roads
+                return 2;
             }
         });
 
@@ -58,4 +56,28 @@ Promise.all([
         .attr("stroke", "red")
         .attr("stroke-width", 3);
 
+    // Filter and count fatal crashes
+    const fatalCrashes = crashData.filter(d => +d.FATAL_COUNT > 0);
+    const fatalityCount = fatalCrashes.reduce((sum, d) => sum + +d.FATAL_COUNT, 0);
+
+    // Add text for the first slide
+    svg.append("text")
+        .attr("x", width / 4)
+        .attr("y", 50)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "24px")
+        .attr("fill", "black")
+        .text(`In 2023, there were ${fatalityCount} traffic fatalities in the city of Philadelphia`);
+
+    // Plot crash locations
+    svg.selectAll("circle.crash")
+        .data(fatalCrashes)
+        .enter()
+        .append("circle")
+        .attr("class", "crash")
+        .attr("cx", d => projection([+d.DEC_LONG, +d.DEC_LAT])[0])
+        .attr("cy", d => projection([+d.DEC_LONG, +d.DEC_LAT])[1])
+        .attr("r", 4)
+        .attr("fill", "red")
+        .attr("opacity", 0.6);
 });
