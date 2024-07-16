@@ -6,8 +6,8 @@ let phillyCSV = d3.csv("/assets/philly_crashes.csv");
 
 const projection = d3.geoMercator()
     .center([-75.1652, 39.9526])
-    .scale(70000)
-    .translate([width / 2, height / 2]);
+    .scale(90000)
+    .translate([width / 3, height / 3]);
 
 const path = d3.geoPath().projection(projection);
 
@@ -42,7 +42,7 @@ Promise.all([
         })
         .attr("stroke-width", d => {
             if (d.properties.highway === "residential") {
-                return 1; // Thinner stroke for residential roads
+                return 0.5; // Thinner stroke for residential roads
             } else {
                 return 2; // Thicker stroke for primary and secondary roads
             }
@@ -50,7 +50,7 @@ Promise.all([
 
     // Draw the city boundary
     svg.selectAll("path.boundary")
-        .data(phillyMap.features.filter(d => d.properties.boundary === 'administrative')) // Assuming 'administrative' signifies boundary features
+        .data(phillyMap.features.filter(d => d.properties.boundary === 'administrative'))
         .enter()
         .append("path")
         .attr("d", path)
