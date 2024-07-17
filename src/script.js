@@ -1,5 +1,5 @@
-const width = 960 * 2;
-const height = 600 * 2;
+const width = 800;
+const height = 1200;
 
 // Load Philadelphia map data and crash data
 let phillyMap = d3.json("/assets/phillyRoads.json");
@@ -9,7 +9,7 @@ let phillyCSV = d3.csv("/assets/philly_crashes.csv");
 const projection = d3.geoMercator()
     .center([-75.1652, 39.9526])
     .scale(90000)
-    .translate([width / 3, height / 2.6]);
+    .translate([width / 2, height / 2]);
 
 const path = d3.geoPath().projection(projection);
 
@@ -27,13 +27,16 @@ Promise.all([
         }))
         .append("g");
 
+    // Center the SVG content
+    // svg.attr("transform", `translate(${(width - projection.translate()[0]) / 2}, ${(height - projection.translate()[1]) / 2})`);
+
     // Filter and count fatal crashes
     const fatalCrashes = crashData.filter(d => +d.FATAL_COUNT > 0);
     const fatalityCount = fatalCrashes.reduce((sum, d) => sum + +d.FATAL_COUNT, 0);
 
     // Add text for the first slide with animation
     svg.append("text")
-        .attr("x", width / 4)
+        .attr("x", width / 2)
         .attr("y", 50)
         .attr("text-anchor", "middle")
         .attr("font-size", "24px")
@@ -88,41 +91,4 @@ Promise.all([
         .duration(2000)
         .attr("r", 4)
         .attr("opacity", 0.6);
-
-    // Add a button to trigger animations
-    d3.select("#visualization")
-        .append("button")
-        .text("Animate")
-        .on("click", animateVisualization);
-
-    function animateVisualization() {
-        // Reset all elements
-        svg.selectAll("path").attr("stroke-width", 0);
-        svg.selectAll("text").style("opacity", 0);
-        svg.selectAll("circle").attr("r", 0).attr("opacity", 0);
-
-        // Animate text
-        svg.selectAll("text")
-            .transition()
-            .duration(1000)
-            .style("opacity", 1);
-
-        // Animate roads and boundary (delayed)
-        svg.selectAll("path")
-            .transition()
-            .delay(1000)
-            .duration(2000)
-            .attr("stroke-width", function() {
-                if (this.classList.contains("boundary")) return 3;
-                return this.classList.contains("road") ? 0.5 : 2;
-            });
-
-        // Animate crash points (delayed)
-        svg.selectAll("circle.crash")
-            .transition()
-            .delay(3000)
-            .duration(2000)
-            .attr("r", 4)
-            .attr("opacity", 0.6);
-    }
 });
