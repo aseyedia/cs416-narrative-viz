@@ -39,7 +39,7 @@ Promise.all([
         .attr("font-size", "24px")
         .attr("fill", "black")
         .style("opacity", 0)
-        .text(`In 2023, there were ${fatalityCount} traffic fatalities in the city of Philadelphia.`)
+        .text(`In 2023, there were ${fatalityCount} traffic fatalities in the city of Philadelphia`)
         .transition()
         .duration(1000)
         .style("opacity", 1);
