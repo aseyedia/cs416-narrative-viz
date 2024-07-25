@@ -163,14 +163,32 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
 
     function showDataQualityIssues() {
         textOverlay.html(`
-            <h2>Data Quality Issues</h2>
-            <p>1. Helmet data (PC_HLM_IND) has been removed from the dataset.</p>
-            <p>2. Some bicycle fatalities are clustered at specific locations, possibly due to data collection limitations.</p>
+            <h2>Major Issues with Bicycle Collision Data</h2>
+            <p>1. <strong>Missing Helmet Data:</strong> The 2023 dataset omits the crucial <code>PC_HELM_IND</code> column, 
+               which previously indicated whether cyclists wore helmets during collisions.</p>
+            <p>2. <strong>Imprecise Location Data:</strong> Many collisions are clustered at generic coordinates, 
+               limiting our ability to identify specific high-risk areas.</p>
+            <p>3. <strong>Data Inconsistency:</strong> The removal of the helmet data makes it impossible to compare 
+               safety trends with previous years or assess the effectiveness of helmet laws.</p>
+            <p>Click on the red circles to see examples of location clustering.</p>
         `)
+        .style("font-size", "14px")
+        .style("line-height", "1.4")
+        .style("max-width", "400px")
         .transition()
         .duration(1000)
         .style("opacity", 1);
-
+    
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0)
+            .style("position", "absolute")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "1px")
+            .style("border-radius", "5px")
+            .style("padding", "10px");
+    
         svg.selectAll(".cluster-point")
             .data(clusteredLocations)
             .enter()
@@ -183,14 +201,41 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
             .attr("stroke", "black")
             .attr("stroke-width", 1)
             .attr("opacity", 0)
+            .on("mouseover", function(event, d) {
+                d3.select(this).attr("stroke-width", 3);
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html(`
+                    <strong>Location:</strong> (${d.coords[1].toFixed(4)}, ${d.coords[0].toFixed(4)})<br>
+                    <strong>Reported fatalities:</strong> ${d.count}<br>
+                    <strong>Issue:</strong> Multiple incidents recorded at the same coordinates
+                `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).attr("stroke-width", 1);
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            })
             .transition()
             .duration(1000)
             .attr("opacity", 0.8);
-
-        // Add tooltips to clustered points
-        svg.selectAll(".cluster-point")
-            .append("title")
-            .text(d => `Reported fatalities at this location: ${d.count}`);
+    
+        // Example of overlapping clusteredLocations
+        const exampleCluster = clusteredLocations[0];
+        svg.append("text")
+            .attr("x", projection(exampleCluster.coords)[0] + 15)
+            .attr("y", projection(exampleCluster.coords)[1] - 15)
+            .text(`Example cluster: ${exampleCluster.count} fatalities`)
+            .attr("font-size", "12px")
+            .attr("fill", "black")
+            .attr("opacity", 0)
+            .transition()
+            .duration(1000)
+            .attr("opacity", 1);
     }
 
     // Initialize with the first slide
@@ -200,6 +245,8 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
     d3.select("#visualization").on("click", () => {
         currentSlide = (currentSlide + 1) % 4;
         showSlide(currentSlide);
+        // Clear all tooltips
+        d3.selectAll(".tooltip").style("opacity", 0);
     });
 
     // Year selection
