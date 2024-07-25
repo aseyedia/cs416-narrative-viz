@@ -5,9 +5,12 @@ const height = 600 * 2;
 let phillyMap = d3.json("/assets/phillyRoads.json");
 let phillyCSV = d3.csv("/assets/philly_crashes.csv");
 
+// subset phillyCSV to only 2023
+phillyCSV = phillyCSV.then(data => data.filter(d => d.CRASH_YEAR === "2023"));
+
 Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
     const phillyCenter = [-75.1652, 39.9526];
-    const scale = 500000;
+    const scale = 200000;
 
     const projection = d3.geoMercator()
         .center(phillyCenter)
@@ -55,25 +58,12 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
     let currentSlide = 0;
     let allCrashes, bicycleFatalities;
 
-    // Clustered bicycle fatality locations
-    const clusteredLocations = [
-        { coords: [-74.9765, 40.0913], count: 8 },
-        { coords: [-75.0848, 40.0341], count: 12 },
-        { coords: [-75.116, 40.0289], count: 8 },
-        { coords: [-75.1346, 39.9788], count: 8 },
-        { coords: [-75.1448, 39.9273], count: 12 },
-        { coords: [-75.1539, 39.9939], count: 4 },
-        { coords: [-75.1779, 39.8996], count: 9 },
-        { coords: [-75.2312, 40.0538], count: 27 },
-        { coords: [-75.2467, 39.9627], count: 24 },
-    ];
-
     function showSlide(slideIndex) {
         currentSlide = slideIndex;
         svg.selectAll(".crash-point, .cluster-point").remove();
         textOverlay.html("");
 
-        switch(slideIndex) {
+        switch (slideIndex) {
             case 0:
                 showAllCollisions();
                 break;
@@ -92,7 +82,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
     function showAllCollisions() {
         allCrashes = crashData;
         const collisionCount = allCrashes.length;
-        
+
         textOverlay.html(`<h2>In 2023, there were ${collisionCount} traffic collisions in Philadelphia</h2>`)
             .transition()
             .duration(1000)
@@ -137,8 +127,9 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
             .attr("opacity", 0.6);
     }
 
+
     function showBicycleFatalities() {
-        bicycleFatalities = crashData.filter(d => +d.FATAL_COUNT > 0 && +d.BICYCLE_DEATH_COUNT > 0);
+        bicycleFatalities = crashData.filter(d => +d.BICYCLE_DEATH_COUNT > 0);
         const bicycleFatalityCount = bicycleFatalities.reduce((sum, d) => sum + +d.BICYCLE_DEATH_COUNT, 0);
 
         textOverlay.html(`<h2>${bicycleFatalityCount} bicycle fatalities occurred in Philadelphia</h2>`)
@@ -154,7 +145,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
             .attr("cx", d => projection([+d.DEC_LONG, +d.DEC_LAT])[0])
             .attr("cy", d => projection([+d.DEC_LONG, +d.DEC_LAT])[1])
             .attr("r", 5)
-            .attr("fill", "yellow")
+            .attr("fill", "orange")
             .attr("opacity", 0)
             .transition()
             .duration(1000)
@@ -172,13 +163,13 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
                safety trends with previous years or assess the effectiveness of helmet laws.</p>
             <p>Click on the red circles to see examples of location clustering.</p>
         `)
-        .style("font-size", "14px")
-        .style("line-height", "1.4")
-        .style("max-width", "400px")
-        .transition()
-        .duration(1000)
-        .style("opacity", 1);
-    
+            .style("font-size", "14px")
+            .style("line-height", "1.4")
+            .style("max-width", "400px")
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
+
         const tooltip = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("opacity", 0)
@@ -188,7 +179,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
             .style("border-width", "1px")
             .style("border-radius", "5px")
             .style("padding", "10px");
-    
+
         svg.selectAll(".cluster-point")
             .data(clusteredLocations)
             .enter()
@@ -201,7 +192,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
             .attr("stroke", "black")
             .attr("stroke-width", 1)
             .attr("opacity", 0)
-            .on("mouseover", function(event, d) {
+            .on("mouseover", function (event, d) {
                 d3.select(this).attr("stroke-width", 3);
                 tooltip.transition()
                     .duration(200)
@@ -214,7 +205,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
+            .on("mouseout", function () {
                 d3.select(this).attr("stroke-width", 1);
                 tooltip.transition()
                     .duration(500)
@@ -223,7 +214,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
             .transition()
             .duration(1000)
             .attr("opacity", 0.8);
-    
+
         // Example of overlapping clusteredLocations
         const exampleCluster = clusteredLocations[0];
         svg.append("text")
@@ -265,7 +256,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, crashData]) => {
         .text(d => d)
         .attr("value", d => d);
 
-    yearSelect.on("change", function() {
+    yearSelect.on("change", function () {
         const selectedYear = this.value;
         crashData = phillyCSV.filter(d => d.CRASH_YEAR === selectedYear);
         showSlide(currentSlide);
