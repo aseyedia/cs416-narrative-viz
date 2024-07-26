@@ -1,6 +1,6 @@
 // Constants and data loading
-const width = 960 * 2;
-const height = 600 * 2;
+const width = 1920;
+const height = 1200;
 
 let phillyMap = d3.json("/assets/phillyRoads.json");
 let phillyCSV = d3.csv("/assets/philly_crashes.csv");
@@ -27,9 +27,14 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
 
     const tooltip = d3.select("body").append("div")
         .attr("class", "tooltip")
-        .style("opacity", 0);
+        .style("opacity", 0)
+        .style("position", "absolute")
+        .style("background-color", "white")
+        .style("border", "1px solid black")
+        .style("border-radius", "5px")
+        .style("padding", "10px")
+        .style("pointer-events", "none");
 
-    // Create a container for the text overlay
     const textOverlay = d3.select("#visualization")
         .append("div")
         .attr("class", "text-overlay")
@@ -41,7 +46,42 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
         .style("border-radius", "5px")
         .style("opacity", 0);
 
-    // Draw the roads with fade-in effect
+    const sliderContainer = d3.select("#visualization")
+        .append("div")
+        .attr("class", "slider-container")
+        .style("position", "absolute")
+        .style("bottom", "20px")
+        .style("left", "20px")
+        .style("width", "300px")
+        .style("display", "none");
+
+    sliderContainer.append("input")
+        .attr("type", "range")
+        .attr("min", 0)
+        .attr("max", 23)
+        .attr("value", 0)
+        .attr("id", "hourSlider");
+
+    sliderContainer.append("span")
+        .attr("id", "hourDisplay")
+        .text("Hour: 0");
+
+    const collisionTypeFilter = d3.select("#visualization")
+        .append("select")
+        .attr("id", "collisionTypeFilter")
+        .style("position", "absolute")
+        .style("bottom", "20px")
+        .style("right", "20px")
+        .style("display", "none");
+
+    collisionTypeFilter.selectAll("option")
+        .data(["All Collisions", "Fatalities", "Bicycle Fatalities"])
+        .enter()
+        .append("option")
+        .text(d => d)
+        .attr("value", d => d);
+
+    // Draw roads
     svg.selectAll("path.road")
         .data(phillyMap.features.filter(d => d.properties.highway))
         .enter()
@@ -65,199 +105,152 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
 
     function showSlide(slideIndex) {
         currentSlide = slideIndex;
-        svg.selectAll(".crash-point, .cluster-point").remove();
-        d3.selectAll(".tooltip").style("opacity", 0);
+        svg.selectAll(".crash-point").remove();
+        tooltip.style("opacity", 0);
         textOverlay.html("");
 
+        sliderContainer.style("display", slideIndex === 4 ? "block" : "none");
+        collisionTypeFilter.style("display", slideIndex === 4 ? "block" : "none");
+
         switch (slideIndex) {
-            case 0:
-                showAllCollisions();
-                break;
-            case 1:
-                showFatalities();
-                break;
-            case 2:
-                showBicycleFatalities();
-                break;
+            case 0: showIntroScene(); break;
+            case 1: showAllCollisions(); break;
+            case 2: showFatalities(); break;
+            case 3: showBicycleFatalities(); break;
+            case 4: showTimeAnalysis(); break;
         }
+    }
+
+    function showIntroScene() {
+        textOverlay.html(`
+            <h2>Philadelphia's Traffic Safety Crisis</h2>
+            <p>Philadelphia has one of the highest traffic death rates in the country, surpassing New York and Boston, and comparable to Los Angeles.</p>
+            <p>In 2023, Philadelphia saw 126 traffic fatalities, with pedestrians and cyclists accounting for more than half of these deaths.</p>
+            <p>Source: <a href="https://www.phillyvoice.com/philly-vision-zero-2023-report-traffic-deaths-vehicle-crashes-pedestrians/" target="_blank">PhillyVoice</a></p>
+            <br>
+            <p>Click through the following scenes to explore Philadelphia's traffic collision data.</p>
+            <p><strong>Click anywhere to begin your exploration.</strong></p>
+        `)
+        .transition()
+        .duration(1000)
+        .style("opacity", 1);
     }
 
     function showAllCollisions() {
         const collisionCount = crashData.length;
-
         textOverlay.html(`<h2>In ${yearSelect.property("value")}, there were ${collisionCount} traffic collisions in Philadelphia</h2>`)
             .transition()
             .duration(1000)
             .style("opacity", 1);
 
-        // First, add this tooltip div to your HTML or create it in your JavaScript
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0)
-            .style("position", "absolute")
-            .style("background-color", "white")
-            .style("border", "solid")
-            .style("border-width", "1px")
-            .style("border-radius", "5px")
-            .style("padding", "10px")
-            .style("pointer-events", "none");
-
-        // Then, modify your crash point creation code
-        svg.selectAll(".crash-point")
-            .data(crashData)
-            .enter()
-            .append("circle")
-            .attr("class", "crash-point")
-            .attr("cx", d => projection([+d.DEC_LONG, +d.DEC_LAT])[0])
-            .attr("cy", d => projection([+d.DEC_LONG, +d.DEC_LAT])[1])
-            .attr("r", 2)
-            .attr("fill", "blue")
-            .attr("opacity", 0)
-            .on("mouseover", function (event, d) {
-                d3.select(this)
-                    .transition()
-                    .duration(100)
-                    .attr("r", 5);
-
-                tooltip.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                tooltip.html(`Date: ${d.CRASH_MONTH}/${d.CRASH_YEAR}<br>
-                      Time: ${d.HOUR_OF_DAY}:00<br>
-                      Fatalities: ${d.FATAL_COUNT}<br>
-                      Injuries: ${d.INJURY_COUNT}`)
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function () {
-                d3.select(this)
-                    .transition()
-                    .duration(100)
-                    .attr("r", 2);
-
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            })
-            .transition()
-            .duration(1000)
-            .attr("opacity", 0.3);
+        createPoints(crashData, "blue", 2, 0.3);
     }
 
     function showFatalities() {
         const fatalCrashes = crashData.filter(d => +d.FATAL_COUNT > 0);
         const fatalityCount = fatalCrashes.length;
-
         textOverlay.html(`<h2>Of these, ${fatalityCount} collisions resulted in fatalities</h2>`)
             .transition()
             .duration(1000)
             .style("opacity", 1);
 
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0)
-            .style("position", "absolute")
-            .style("background-color", "white")
-            .style("border", "solid")
-            .style("border-width", "1px")
-            .style("border-radius", "5px")
-            .style("padding", "10px")
-            .style("pointer-events", "none");
-
-        // For fatal crashes
-        svg.selectAll(".crash-point")
-            .data(fatalCrashes)
-            .enter()
-            .append("circle")
-            .attr("class", "crash-point")
-            .attr("cx", d => projection([+d.DEC_LONG, +d.DEC_LAT])[0])
-            .attr("cy", d => projection([+d.DEC_LONG, +d.DEC_LAT])[1])
-            .attr("r", 4)
-            .attr("fill", "red")
-            .attr("opacity", 0)
-            .on("mouseover", function (event, d) {
-                d3.select(this).attr("r", 6);
-                tooltip.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                tooltip.html(`Date: ${d.CRASH_MONTH}/${d.CRASH_YEAR}<br>
-                      Time: ${d.HOUR_OF_DAY}:00<br>
-                      Fatalities: ${d.FATAL_COUNT}<br>
-                      Injuries: ${d.INJURY_COUNT}`)
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function () {
-                d3.select(this).attr("r", 4);
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            })
-            .transition()
-            .duration(1000)
-            .attr("opacity", 0.6);
+        createPoints(fatalCrashes, "red", 4, 0.6);
     }
 
     function showBicycleFatalities() {
         const bicycleFatalities = crashData.filter(d => +d.BICYCLE_DEATH_COUNT > 0);
         const bicycleFatalityCount = bicycleFatalities.length;
-
         textOverlay.html(`<h2>${bicycleFatalityCount} bicycle fatalities occurred in Philadelphia</h2>`)
             .transition()
             .duration(1000)
             .style("opacity", 1);
 
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0)
-            .style("position", "absolute")
-            .style("background-color", "white")
-            .style("border", "solid")
-            .style("border-width", "1px")
-            .style("border-radius", "5px")
-            .style("padding", "10px")
-            .style("pointer-events", "none");
+        createPoints(bicycleFatalities, "orange", 5, 0.8);
+    }
 
-        // For bicycle fatalities
+    function showTimeAnalysis() {
+        textOverlay.html(`
+            <h2>Analyze Crashes by Time of Day</h2>
+            <p>Use the slider below to explore how crashes occur throughout the day.</p>
+            <p>Change the collision type using the dropdown menu.</p>
+        `)
+        .transition()
+        .duration(1000)
+        .style("opacity", 1);
+
+        updateVisualization();
+    }
+
+    function createPoints(data, color, radius, opacity) {
         svg.selectAll(".crash-point")
-            .data(bicycleFatalities)
+            .data(data)
             .enter()
             .append("circle")
             .attr("class", "crash-point")
             .attr("cx", d => projection([+d.DEC_LONG, +d.DEC_LAT])[0])
             .attr("cy", d => projection([+d.DEC_LONG, +d.DEC_LAT])[1])
-            .attr("r", 5)
-            .attr("fill", "orange")
+            .attr("r", radius)
+            .attr("fill", color)
             .attr("opacity", 0)
-            .on("mouseover", function (event, d) {
-                d3.select(this).attr("r", 7);
-                tooltip.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                tooltip.html(`Date: ${d.CRASH_MONTH}/${d.CRASH_YEAR}<br>
-                      Time: ${d.HOUR_OF_DAY}:00<br>
-                      Bicycle Fatalities: ${d.BICYCLE_DEATH_COUNT}<br>
-                      Total Fatalities: ${d.FATAL_COUNT}<br>
-                      Injuries: ${d.INJURY_COUNT}`)
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function () {
-                d3.select(this).attr("r", 5);
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            })
+            .on("mouseover", showTooltip)
+            .on("mouseout", hideTooltip)
             .transition()
             .duration(1000)
-            .attr("opacity", 0.8);
+            .attr("opacity", opacity);
     }
 
-    // Add click event to progress through slides
-    d3.select("#visualization").on("click", () => {
-        currentSlide = (currentSlide + 1) % 3;
-        showSlide(currentSlide);
+    function showTooltip(event, d) {
+        d3.select(this).attr("r", +this.getAttribute("r") + 2);
+        tooltip.transition()
+            .duration(200)
+            .style("opacity", .9);
+        tooltip.html(`Date: ${d.CRASH_MONTH}/${d.CRASH_YEAR}<br>
+            Time: ${d.HOUR_OF_DAY}:00<br>
+            Fatalities: ${d.FATAL_COUNT}<br>
+            Bicycle Fatalities: ${d.BICYCLE_DEATH_COUNT}<br>
+            Injuries: ${d.INJURY_COUNT}`)
+            .style("left", (event.pageX + 5) + "px")
+            .style("top", (event.pageY - 28) + "px");
+    }
+
+    function hideTooltip() {
+        d3.select(this).attr("r", this.getAttribute("r"));
+        tooltip.transition()
+            .duration(500)
+            .style("opacity", 0);
+    }
+
+    function updateVisualization() {
+        const hour = +d3.select("#hourSlider").property("value");
+        const collisionType = d3.select("#collisionTypeFilter").property("value");
+
+        let filteredData = crashData.filter(d => +d.HOUR_OF_DAY === hour);
+        if (collisionType === "Fatalities") {
+            filteredData = filteredData.filter(d => +d.FATAL_COUNT > 0);
+        } else if (collisionType === "Bicycle Fatalities") {
+            filteredData = filteredData.filter(d => +d.BICYCLE_DEATH_COUNT > 0);
+        }
+
+        svg.selectAll(".crash-point").remove();
+        createPoints(filteredData, d => {
+            if (+d.BICYCLE_DEATH_COUNT > 0) return "orange";
+            if (+d.FATAL_COUNT > 0) return "red";
+            return "blue";
+        }, 4, 0.6);
+
+        d3.select("#hourDisplay").text(`Hour: ${hour}`);
+    }
+
+    // Event listeners
+    d3.select("#visualization").on("click", (event) => {
+        if (event.target.tagName !== "SELECT" && event.target.tagName !== "INPUT") {
+            currentSlide = (currentSlide + 1) % 5;
+            showSlide(currentSlide);
+        }
     });
+
+    d3.select("#hourSlider").on("input", updateVisualization);
+    d3.select("#collisionTypeFilter").on("change", updateVisualization);
 
     // Year selection
     const years = [...new Set(fullCrashData.map(d => d.CRASH_YEAR))].sort();
@@ -275,13 +268,12 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
         .text(d => d)
         .attr("value", d => d);
 
-    yearSelect.on("change", function () {
-        const selectedYear = this.value;
-        crashData = filterDataByYear(selectedYear);
+    yearSelect.on("change", function() {
+        crashData = filterDataByYear(this.value);
         showSlide(currentSlide);
     });
 
-    // Initialize with the most recent year
+    // Initialize
     const mostRecentYear = years[years.length - 1];
     yearSelect.property("value", mostRecentYear);
     crashData = filterDataByYear(mostRecentYear);
