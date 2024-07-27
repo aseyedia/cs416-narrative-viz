@@ -215,9 +215,9 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
             <p>Use the slider below to explore how crashes occur throughout the day.</p>
             <p>Change the collision type using the dropdown menu.</p>
         `)
-        .transition()
-        .duration(1000)
-        .style("opacity", 1);
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
 
         updateVisualization();
     }
@@ -232,8 +232,21 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
             .attr("cy", d => projection([+d.DEC_LONG, +d.DEC_LAT])[1])
             .attr("r", radius)
             .attr("fill", color)
-            .on("mouseover", showTooltip)
-            .on("mouseout", hideTooltip);
+            .attr("data-original-radius", radius) // Store the original radius
+            .on("mouseover", function (event, d) {
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr("r", radius * 1.5); // Increase size by 50%
+                showTooltip(event, d);
+            })
+            .on("mouseout", function () {
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr("r", d3.select(this).attr("data-original-radius")); // Reset to original size
+                hideTooltip();
+            });
 
         if (instant) {
             points.attr("opacity", opacity);
@@ -246,7 +259,6 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
     }
 
     function showTooltip(event, d) {
-        d3.select(this).attr("r", +this.getAttribute("r") + 2);
         tooltip.transition()
             .duration(200)
             .style("opacity", .9);
@@ -261,7 +273,6 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
     }
 
     function hideTooltip() {
-        d3.select(this).attr("r", this.getAttribute("r"));
         tooltip.transition()
             .duration(500)
             .style("opacity", 0);
@@ -318,7 +329,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
         .text(d => d)
         .attr("value", d => d);
 
-    yearSelect.on("change", function() {
+    yearSelect.on("change", function () {
         crashData = filterDataByYear(this.value);
         showSlide(currentSlide);
     });
