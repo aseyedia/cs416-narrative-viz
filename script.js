@@ -2,8 +2,8 @@
 const width = 1920;
 const height = 1200;
 
-let phillyMap = d3.json("dist/phillyRoads.json");
-let phillyCSV = d3.csv("dist/philly_crashes.csv");
+let phillyMap = d3.json("public/assets/phillyRoads.json");
+let phillyCSV = d3.csv("public/assets/philly_crashes.csv");
 
 Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
     const phillyCenter = [-75.1652, 39.9526];
