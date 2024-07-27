@@ -131,9 +131,9 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
             <p>Click through the following scenes to explore Philadelphia's traffic collision data.</p>
             <p><strong>Click anywhere to begin your exploration.</strong></p>
         `)
-        .transition()
-        .duration(1000)
-        .style("opacity", 1);
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
     }
 
     function showAllCollisions() {
@@ -174,15 +174,15 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
             <p>Use the slider below to explore how crashes occur throughout the day.</p>
             <p>Change the collision type using the dropdown menu.</p>
         `)
-        .transition()
-        .duration(1000)
-        .style("opacity", 1);
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
 
         updateVisualization();
     }
 
-    function createPoints(data, color, radius, opacity) {
-        svg.selectAll(".crash-point")
+    function createPoints(data, color, radius, opacity, instant = false) {
+        let points = svg.selectAll(".crash-point")
             .data(data)
             .enter()
             .append("circle")
@@ -191,12 +191,17 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
             .attr("cy", d => projection([+d.DEC_LONG, +d.DEC_LAT])[1])
             .attr("r", radius)
             .attr("fill", color)
-            .attr("opacity", 0)
             .on("mouseover", showTooltip)
-            .on("mouseout", hideTooltip)
-            .transition()
-            .duration(1000)
-            .attr("opacity", opacity);
+            .on("mouseout", hideTooltip);
+
+        if (instant) {
+            points.attr("opacity", opacity);
+        } else {
+            points.attr("opacity", 0)
+                .transition()
+                .duration(1000)
+                .attr("opacity", opacity);
+        }
     }
 
     function showTooltip(event, d) {
@@ -236,7 +241,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
             if (+d.BICYCLE_DEATH_COUNT > 0) return "orange";
             if (+d.FATAL_COUNT > 0) return "red";
             return "blue";
-        }, 4, 0.6);
+        }, 4, 0.6, true);  // Added 'true' for instant display
 
         d3.select("#hourDisplay").text(`Hour: ${hour}`);
     }
@@ -268,7 +273,7 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
         .text(d => d)
         .attr("value", d => d);
 
-    yearSelect.on("change", function() {
+    yearSelect.on("change", function () {
         crashData = filterDataByYear(this.value);
         showSlide(currentSlide);
     });
