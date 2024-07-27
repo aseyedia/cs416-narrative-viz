@@ -8,6 +8,10 @@ These data were sourced from [PennDOT's Crash Database](https://pennshare.maps.a
 
 These data were preprocessed ([1](https://github.com/aseyedia/philly-crash-stats/blob/main/code/download_preprocess.R) and [2](https://github.com/aseyedia/philly-crash-stats/blob/main/code/export.R)) for inclusion in this project. [The Philadelphia SVG was ordered from Etsy](https://www.etsy.com/listing/1234225021/philadelphia-svg-street-map-philadelphia?ga_order=most_relevant&ga_search_type=all&ga_view_type=gallery&ga_search_query=Philadelphia+SVG+Street+Map&ref=sr_gallery-1-1&dd=1&content_source=d27f2d577b89f446df5bf21a2200de53d8a8df5b%253A1234225021&organic_search_click=1).
 
+<p align="center">
+  <a href="https://aseyedia.github.io/cs416-narrative-viz/" style="font-size: 24px; font-weight: bold;">Visit the GitHub Page</a>
+</p>
+
 ## Features
 
 - Interactive map of Philadelphia showing traffic collision data
