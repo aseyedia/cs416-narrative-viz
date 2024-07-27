@@ -151,6 +151,8 @@ Promise.all([phillyMap, phillyCSV]).then(([phillyMap, fullCrashData]) => {
             <p><strong>Click anywhere to begin your exploration.</strong></p>
         `;
 
+        introText += `<p>Source: <a href="https://crashinfo.penndot.pa.gov/PCIT/welcome.html" target="_blank">PennDOT Public Crash Database</a></p>`;
+
         textOverlay.html(introText)
             .transition()
             .duration(1000)
