@@ -21,8 +21,19 @@ jobs:
     - name: Build
       run: npx vite build
 
-    - name: List dist contents
-      run: ls -R dist
+    - name: Debug - List all files
+      run: |
+        echo "Current directory structure:"
+        ls -R
+        echo "------------------------"
+        echo "Dist directory structure:"
+        ls -R dist
+        echo "------------------------"
+        echo "Content of index.html:"
+        cat dist/index.html
+        echo "------------------------"
+        echo "Content of script.js:"
+        cat dist/assets/script-*.js
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
