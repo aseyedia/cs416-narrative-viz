@@ -27,7 +27,7 @@ These data were preprocessed ([1](https://github.com/aseyedia/philly-crash-stats
 
 ## Data Source
 
-The data used in this visualization is sourced from [insert your data source here, e.g., "Philadelphia's Open Data Portal"].
+The data used in this visualization is sourced from [PennDOT's Crash Database](https://pennshare.maps.arcgis.com/apps/webappviewer/index.html?id=8fdbf046e36e41649bbfd9d7dd7c7e7e).
 
 ## How to Use
 
